@@ -2,12 +2,9 @@ import { supabase } from "../../../client"; // Import Supabase client
 import { google } from "googleapis"; // Import Google APIs
 
 // Set up Google Sheets API credentials and sheet details
-console.log(process.env.GOOGLE_SERVICE_ACCOUNT_CREDENTIALS); // Debugging
 const GOOGLE_CREDENTIALS = JSON.parse(process.env.GOOGLE_SERVICE_ACCOUNT_CREDENTIALS);
-console.log("credentials",GOOGLE_CREDENTIALS);
 
-// const GOOGLE_CREDENTIALS = JSON.parse(process.env.GOOGLE_SERVICE_ACCOUNT_CREDENTIALS);
-// const SPREADSHEET_ID = process.env.SPREADSHEET_ID; // Add your Google Sheet ID here
+const SPREADSHEET_ID = process.env.SPREADSHEET_ID; 
 
 export default async function handler(req, res) {
   console.log("Incoming response:", req.body);
