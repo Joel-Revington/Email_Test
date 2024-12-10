@@ -1,7 +1,18 @@
 import { supabase } from "../../../client";
 import { google } from "googleapis";
 
-const credentials = JSON.parse(process.env.GOOGLE_SERVICE_ACCOUNT_CREDENTIALS);
+// Decode Google credentials
+const getGoogleCredentials = () => {
+  try {
+    return JSON.parse(
+      Buffer.from(process.env.GOOGLE_SERVICE_ACCOUNT_CREDENTIALS, "base64").toString()
+    );
+  } catch (error) {
+    console.error("Error decoding Google credentials:", error);
+    throw new Error("Invalid Google credentials");
+  }
+};
+
 const spreadsheetId = process.env.SPREADSHEET_ID;
 
 export default async function handler(req, res) {
@@ -14,9 +25,11 @@ export default async function handler(req, res) {
     return res.status(400).json({ success: false, error: "Visitor data is missing" });
   }
 
-  const { name, email: email, phone } = visitor;
-  if (!name || !email || !phone) {
-    console.error("Required fields (name, email, phone) are missing.");
+  const { name, email, phone } = visitor;
+  
+  // Validate required fields and trim whitespace
+  if (!name?.trim() || !email?.trim() || !phone?.trim()) {
+    console.error("Required fields (name, email, phone) are missing or invalid.");
     return res.status(400).json({ success: false, error: "Missing required fields" });
   }
 
@@ -37,8 +50,10 @@ export default async function handler(req, res) {
 
     // Now handle Google Sheets appending in a separate try-catch block
     try {
+      const credentials = getGoogleCredentials();
+
       const auth = new google.auth.GoogleAuth({
-        credentials: credentials,
+        credentials,
         scopes: ["https://www.googleapis.com/auth/spreadsheets"],
       });
 
