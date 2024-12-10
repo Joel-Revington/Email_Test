@@ -17,7 +17,7 @@ const spreadsheetId = process.env.SPREADSHEET_ID;
 
 export default async function handler(req, res) {
   console.log("Headers:", req.headers);
-  
+
   // Validate incoming request body
   const visitor = req.body.entity?.visitor;
   if (!visitor) {
@@ -26,7 +26,7 @@ export default async function handler(req, res) {
   }
 
   const { name, email, phone } = visitor;
-  
+
   // Validate required fields and trim whitespace
   if (!name?.trim() || !email?.trim() || !phone?.trim()) {
     console.error("Required fields (name, email, phone) are missing or invalid.");
@@ -48,39 +48,37 @@ export default async function handler(req, res) {
 
     console.log("Supabase data:", user);
 
-    // Now handle Google Sheets appending in a separate try-catch block
-    try {
-      const credentials = getGoogleCredentials();
+    // Handle Google Sheets appending
+    const credentials = getGoogleCredentials();
+    const auth = new google.auth.GoogleAuth({
+      credentials,
+      scopes: ["https://www.googleapis.com/auth/spreadsheets"],
+    });
 
-      const auth = new google.auth.GoogleAuth({
-        credentials,
-        scopes: ["https://www.googleapis.com/auth/spreadsheets"],
-      });
+    const sheets = google.sheets({ version: "v4", auth });
 
-      const sheets = google.sheets({ version: "v4", auth });
-      const sheetRow = [
-        [name.trim(), email.trim(), phone.trim()],
-      ];
+    const sheetRow = [
+      [name.trim(), email.trim(), phone.trim()],
+    ];
 
-      await sheets.spreadsheets.values.append({
-        spreadsheetId: spreadsheetId,
-        range: "Sheet1",
-        valueInputOption: "USER_ENTERED",
-        resource: { values: sheetRow },
-      });
+    await sheets.spreadsheets.values.append({
+      spreadsheetId: spreadsheetId,
+      range: "Sheet1", // Adjust sheet name as necessary
+      valueInputOption: "USER_ENTERED",
+      resource: { values: sheetRow },
+    });
 
-      console.log("Data added to Google Sheets successfully");
+    console.log("Data appended to Google Sheets successfully.");
 
-      // Respond with success after both operations
-      return res.status(200).json({ success: true, user });
-
-    } catch (googleError) {
-      console.error("Google Sheets API error:", googleError);
-      return res.status(500).json({ success: false, error: "Failed to update Google Sheets" });
-    }
+    // Respond success
+    return res.status(200).json({
+      success: true,
+      user,
+      message: "Data successfully saved to Supabase and Google Sheets",
+    });
 
   } catch (error) {
     console.error("Unexpected error:", error);
-    return res.status(500).json({ success: false, error: "Unexpected error occurred" });
+    return res.status(500).json({ success: false, error: error.message || "Unexpected error occurred" });
   }
 }
