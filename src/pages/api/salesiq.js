@@ -16,7 +16,6 @@ const getGoogleCredentials = () => {
 const spreadsheetId = process.env.SPREADSHEET_ID;
 
 export default async function handler(req, res) {
-  console.log("Headers:", req.headers);
 
   // Validate incoming request body
   const visitor = req.body.entity?.visitor;
@@ -46,8 +45,6 @@ export default async function handler(req, res) {
       return res.status(400).json({ success: false, error: error.message });
     }
 
-    console.log("Supabase data:", user);
-
     // Handle Google Sheets appending
     const credentials = getGoogleCredentials();
     const auth = new google.auth.GoogleAuth({
@@ -73,7 +70,6 @@ export default async function handler(req, res) {
     // Respond success
     return res.status(200).json({
       success: true,
-      user,
       message: "Data successfully saved to Supabase and Google Sheets",
     });
 
